@@ -31,5 +31,13 @@ namespace AmountToEnglishCurrency.Tests.Services
             Assert.Throws<InvalidAmountException>(() =>
                         _currencyTranslateFixture.CurrencyTranslateService.CurrencyToWords(invalidAmount));
         }
+
+        [Theory]
+        [MassiveAmountData]
+        public void Exception_When_CurrencyToWords_MassiveAmount(string massiveAmount)
+        {
+            Assert.Throws<AmountLimitExceededException>(() =>
+                        _currencyTranslateFixture.CurrencyTranslateService.CurrencyToWords(massiveAmount));
+        }
     }
 }

@@ -4,9 +4,9 @@ using System.Text;
 
 namespace AmountToEnglishCurrency.Services
 {
-    public class CurrencyTranslateService : ICurrencyTranslateService
+	public class CurrencyTranslateService : ICurrencyTranslateService
 	{
-        private readonly string[] _seperators = { "", " Thousand ", " Million ", " Billion " };
+		private readonly string[] _seperators = { "", " Thousand ", " Million ", " Billion " };
 		private readonly string[] _ones =
 		{
 			"One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine", "Ten", "Eleven",
@@ -14,11 +14,11 @@ namespace AmountToEnglishCurrency.Services
 		};
 		private readonly string[] _tens = { "Ten", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety" };
 
-		
+
 		public string CurrencyToWords(string input)
 		{
 			StringBuilder strWords = new StringBuilder();
-            int inputValue, decimalPartValue = 0;
+			var decimalPart = "";
 
 			if (!input.IsValidAmount())
 			{
@@ -27,37 +27,41 @@ namespace AmountToEnglishCurrency.Services
 
 			if (input.Contains("."))
 			{
-                var decimalPart = input.Substring(input.IndexOf(".") + 1);
-                if (decimalPart.Length == 1) { decimalPart = $"{decimalPart}0"; }
+				decimalPart = input.Substring(input.IndexOf(".") + 1);
+				if (decimalPart.Length == 1) { decimalPart = $"{decimalPart}0"; }
 				input = input.Remove(input.IndexOf("."));
-				decimalPartValue = int.Parse(decimalPart);
+			}			
+
+			if (Helpers.IsZero(input))
+			{
+				strWords.Append("Zero Dollars");
+			}
+            else
+            {
+				strWords.Append(WholeNumberToWords(input));
+				strWords.Append(Helpers.CurrencyFomatter(input, "Dollar"));
 			}
 
-			inputValue = int.Parse(input);
+			strWords.Append(" and ");
 
-			strWords.Append(WholeNumberToWords(inputValue));
-
-			if (inputValue > 0)
+			if (Helpers.IsZero(decimalPart))
 			{
-				strWords.Append(Helpers.CurrencyFomatter(inputValue, "Dollar"));
+				strWords.Append("Zero Cents");
 			}
-
-			if (decimalPartValue > 0)
-			{
-				if (inputValue > 0) { strWords.Append(" and "); }
-
-				strWords.Append(WholeNumberToWords(decimalPartValue));
-				strWords.Append(Helpers.CurrencyFomatter(decimalPartValue, "Cent"));
+			else
+            {
+				strWords.Append(WholeNumberToWords(decimalPart));
+				strWords.Append(Helpers.CurrencyFomatter(decimalPart, "Cent"));
 			}
 
 			return strWords.ToString();
 		}
 
-		private string WholeNumberToWords(int number)
+		private string WholeNumberToWords(string number)
 		{
 			int i = 0;
 			string strNumber = number.ToString();
-			string strWords = "";			
+			string strWords = "";
 
 			while (strNumber.Length > 0)
 			{
@@ -67,6 +71,7 @@ namespace AmountToEnglishCurrency.Services
 
 				strThreeDigits = ThreeDigitsToWord(threeDigitsValue);
 
+				if(i > _seperators.Length - 1) { throw new AmountLimitExceededException("Amount Limit Exceeded. Please Update the Seperators"); }
 				strThreeDigits += _seperators[i];
 
 				strWords = strThreeDigits + strWords;
